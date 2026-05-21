@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
 
+# Forsiraj Node 24 za sve JavaScript actions (actions/checkout, actions/cache).
+# Inače GitHub upozorava da se Node 20 deprecira (default postaje Node 24 u lipnju 2026).
+# Node 24 je backward-compatible — pinned akcijske verzije (@v4) i dalje rade.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 # Napomena o PHP 8.1:
 # composer.json zadržava "php": "^8.1" — end-useri na PHP 8.1 mogu instalirati paket
 # i koristiti ga s Laravel 10. CI matrica testira PHP 8.2+ jer Pest 2/3 dev tooling
