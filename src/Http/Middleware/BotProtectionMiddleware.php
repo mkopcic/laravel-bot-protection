@@ -4,6 +4,8 @@ namespace Mkopcic\BotProtection\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Mkopcic\BotProtection\Events\BotBlocked;
 use Symfony\Component\HttpFoundation\Response;
 
 class BotProtectionMiddleware
@@ -17,7 +19,11 @@ class BotProtectionMiddleware
             return $next($request);
         }
 
-        if ($this->shouldBlock($request)) {
+        $matched = $this->resolveBlockReason($request);
+
+        if ($matched !== null) {
+            $this->dispatchAndLog($request, $matched);
+
             return response(
                 config('bot-protection.block_message', 'Forbidden'),
                 (int) config('bot-protection.block_status', 403)
@@ -33,31 +39,30 @@ class BotProtectionMiddleware
     }
 
     /**
-     * Determine if the request should be blocked.
+     * Vrati razlog blokiranja (matched bot string) ili null ako se request propušta.
      */
-    protected function shouldBlock(Request $request): bool
+    protected function resolveBlockReason(Request $request): ?string
     {
         // IP whitelist bypass
         $clientIp = $request->ip();
         $allowedIps = (array) config('bot-protection.allowed_ips', []);
         if ($clientIp !== null && in_array($clientIp, $allowedIps, true)) {
-            return false;
+            return null;
         }
 
         $userAgent = $request->userAgent() ?? '';
 
-        // Prazan UA
         if ($userAgent === '') {
-            return (bool) config('bot-protection.block_empty_user_agent', false);
+            return config('bot-protection.block_empty_user_agent', false) ? '(empty)' : null;
         }
 
-        return $this->matchesBlockedAgent($userAgent);
+        return $this->matchedBlockedAgent($userAgent);
     }
 
     /**
-     * Provjeri sadrži li User-Agent neki od blokiranih stringa.
+     * Vrati prvi blocked_agents string koji se podudara s UA, ili null.
      */
-    protected function matchesBlockedAgent(string $userAgent): bool
+    protected function matchedBlockedAgent(string $userAgent): ?string
     {
         foreach ((array) config('bot-protection.blocked_agents', []) as $needle) {
             if ($needle === '' || $needle === null) {
@@ -65,11 +70,42 @@ class BotProtectionMiddleware
             }
 
             if (stripos($userAgent, (string) $needle) !== false) {
-                return true;
+                return (string) $needle;
             }
         }
 
-        return false;
+        return null;
+    }
+
+    /**
+     * Emit BotBlocked event i, ako je log_blocked uključen, zapiši u log.
+     */
+    protected function dispatchAndLog(Request $request, string $matched): void
+    {
+        $event = new BotBlocked(
+            userAgent: $request->userAgent() ?? '',
+            ip: $request->ip() ?? 'unknown',
+            url: $request->fullUrl(),
+            matchedAgent: $matched,
+        );
+
+        event($event);
+
+        if (!config('bot-protection.log_blocked', false)) {
+            return;
+        }
+
+        $channel = config('bot-protection.log_channel');
+        $logger = is_string($channel) && $channel !== ''
+            ? Log::channel($channel)
+            : Log::channel(config('logging.default', 'stack'));
+
+        $logger->warning('[bot-protection] Bot blocked', [
+            'user_agent'    => $event->userAgent,
+            'ip'            => $event->ip,
+            'url'           => $event->url,
+            'matched_agent' => $event->matchedAgent,
+        ]);
     }
 
     /**

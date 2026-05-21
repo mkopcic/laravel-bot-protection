@@ -3,9 +3,11 @@
 namespace Mkopcic\BotProtection;
 
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Mkopcic\BotProtection\Console\Commands\TestBotProtectionCommand;
 use Mkopcic\BotProtection\Http\Middleware\BotProtectionMiddleware;
+use Mkopcic\BotProtection\Support\MetaTags;
 
 class BotProtectionServiceProvider extends ServiceProvider
 {
@@ -28,6 +30,17 @@ class BotProtectionServiceProvider extends ServiceProvider
         $this->registerPublishables();
         $this->registerMiddleware();
         $this->registerCommands();
+        $this->registerBladeDirectives();
+    }
+
+    /**
+     * Registriraj @botProtectionMeta Blade direktivu.
+     */
+    protected function registerBladeDirectives(): void
+    {
+        Blade::directive('botProtectionMeta', function () {
+            return '<?php echo \\' . MetaTags::class . '::render(); ?>';
+        });
     }
 
     /**

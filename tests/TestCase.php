@@ -26,6 +26,8 @@ abstract class TestCase extends Orchestra
         $app['config']->set('bot-protection.block_message', 'Forbidden');
         $app['config']->set('bot-protection.x_robots_tag', 'noindex, nofollow, noarchive, nosnippet');
         $app['config']->set('bot-protection.block_empty_user_agent', false);
+        $app['config']->set('bot-protection.log_blocked', false);
+        $app['config']->set('bot-protection.log_channel', null);
         $app['config']->set('bot-protection.allowed_ips', []);
         $app['config']->set('bot-protection.blocked_agents', [
             'GPTBot',

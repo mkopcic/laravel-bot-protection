@@ -27,11 +27,14 @@ Built for production apps where you need **zero-config setup** but **fine-graine
 - 🚫 **Blocks 30+ known bots** out of the box — GPTBot, ClaudeBot, PerplexityBot, Bytespider, Google-Extended, CCBot, AhrefsBot, SemrushBot, and more
 - ⚡ **Auto-registers globally** — install and you're protected, no manual middleware setup
 - 🏷️ **Adds `X-Robots-Tag` header** to every response — covers crawlers that respect HTTP-level directives
+- 🎨 **`@botProtectionMeta` Blade directive** — one-liner for `<meta name="robots">` tags in your layouts
+- 📡 **`BotBlocked` event** — listen and react: log, alert, feed analytics
+- 📝 **Optional logging** — write blocked requests to any Laravel log channel
 - 🔧 **Fully configurable** via `.env` or published config — toggle, status code, custom message, allow-list IPs
 - 📄 **Publishable `robots.txt`** with comprehensive AI/SEO crawler disallow list
 - 🌐 **Server-level config stubs** — Nginx (shared map + per-vhost), Apache vhost, `.htaccess`
 - 🧪 **Artisan test command** — verify protection works against a live URL
-- ✅ **Tested with Pest** — 13 tests covering blocking, headers, config flags, IP whitelist
+- ✅ **Tested with Pest** — 25+ tests covering middleware, events, logging, Blade directive, Artisan command
 - 🐘 **Wide compatibility** — Laravel 10 / 11 / 12 / 13, PHP 8.1+
 
 ---
@@ -122,9 +125,86 @@ BOT_PROTECTION_BLOCK_EMPTY_UA=false
 
 # IPs that bypass blocking (comma-separated)
 BOT_PROTECTION_ALLOWED_IPS="1.2.3.4,5.6.7.8"
+
+# Log every blocked request as a warning
+BOT_PROTECTION_LOG_BLOCKED=false
+
+# Specific log channel (defaults to logging.default)
+BOT_PROTECTION_LOG_CHANNEL=daily
 ```
 
 For custom blocked agent lists, publish the config and edit `config/bot-protection.php`.
+
+---
+
+## 🎨 Blade Directive — `@botProtectionMeta`
+
+Drop one line into your `<head>` and the package renders the standard robots meta tags using your configured `x_robots_tag` value:
+
+```blade
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>My App</title>
+
+    @botProtectionMeta
+</head>
+```
+
+Renders:
+
+```html
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="googlebot-news" content="noindex">
+<meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet">
+```
+
+If `x_robots_tag` is empty, the directive renders nothing.
+
+---
+
+## 📡 `BotBlocked` Event
+
+Every block fires a `Mkopcic\BotProtection\Events\BotBlocked` event with full request context. Listen to it for logging, alerting, or analytics:
+
+```php
+// app/Providers/AppServiceProvider.php
+use Illuminate\Support\Facades\Event;
+use Mkopcic\BotProtection\Events\BotBlocked;
+
+public function boot(): void
+{
+    Event::listen(function (BotBlocked $event) {
+        // $event->userAgent     — full UA string
+        // $event->ip            — client IP
+        // $event->url           — full URL the bot tried
+        // $event->matchedAgent  — which needle from blocked_agents matched
+
+        \Log::channel('bots')->info('Blocked', (array) $event);
+    });
+}
+```
+
+Or use a dedicated listener class:
+
+```bash
+php artisan make:listener LogBlockedBot --event="Mkopcic\BotProtection\Events\BotBlocked"
+```
+
+---
+
+## 📝 Built-in Logging
+
+If you don't need custom event handling, just turn on logging:
+
+```dotenv
+BOT_PROTECTION_LOG_BLOCKED=true
+BOT_PROTECTION_LOG_CHANNEL=daily
+```
+
+Every blocked request writes a `warning` to the chosen channel with `user_agent`, `ip`, `url`, and `matched_agent` in the context.
 
 ---
 

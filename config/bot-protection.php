@@ -81,6 +81,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Log Blocked Requests
+    |--------------------------------------------------------------------------
+    |
+    | Ako je true, svaki blokiran bot se zapisuje u Laravel log
+    | s razinom 'warning'. Korisno za monitoring i analitiku.
+    |
+    */
+    'log_blocked' => env('BOT_PROTECTION_LOG_BLOCKED', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Log Channel
+    |--------------------------------------------------------------------------
+    |
+    | Naziv log channela u koji se piše. Null ili prazan string =
+    | koristi default Laravel log channel (config logging.default).
+    |
+    */
+    'log_channel' => env('BOT_PROTECTION_LOG_CHANNEL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Allowed IPs
     |--------------------------------------------------------------------------
     |
