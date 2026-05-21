@@ -1,80 +1,156 @@
-# Laravel Bot Protection
+<div align="center">
 
-Laravel middleware za blokiranje AI crawlera, tražilica i poznatih scraper botova. Automatska registracija u `web` middleware grupu, fully konfigurabilan, podržava Laravel 10 / 11 / 12 / 13.
+# 🤖🛡️ Laravel Bot Protection
 
-## Što paket radi
+**Block AI crawlers, search engines, and known scrapers from your Laravel app — with one line of `composer require`.**
 
-1. **Blokira poznate bot User-Agente** (vraća HTTP 403 — konfigurabilno)
-2. **Dodaje `X-Robots-Tag: noindex, nofollow, noarchive, nosnippet` header** na sve odgovore
-3. **Publishable `robots.txt`** s kompletnom listom AI crawlera
-4. **Publishable Nginx i Apache config primjeri** za web server razinu zaštite
-5. **Artisan komanda za testiranje** — pošalji request s lažnim bot UA i provjeri vraća li server 403
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/mkopcic/laravel-bot-protection.svg?style=flat-square)](https://packagist.org/packages/mkopcic/laravel-bot-protection)
+[![Total Downloads](https://img.shields.io/packagist/dt/mkopcic/laravel-bot-protection.svg?style=flat-square)](https://packagist.org/packages/mkopcic/laravel-bot-protection)
+[![License](https://img.shields.io/packagist/l/mkopcic/laravel-bot-protection.svg?style=flat-square)](LICENSE)
+[![PHP Version](https://img.shields.io/packagist/php-v/mkopcic/laravel-bot-protection.svg?style=flat-square)](composer.json)
+[![Laravel](https://img.shields.io/badge/Laravel-10%20%7C%2011%20%7C%2012%20%7C%2013-FF2D20?style=flat-square&logo=laravel)](composer.json)
 
-Pokriva: GPTBot, ChatGPT-User, ClaudeBot, anthropic-ai, Google-Extended, Googlebot, PerplexityBot, Bytespider, CCBot, Cohere, Mistral, Meta, Apple, Amazon, SemrushBot, AhrefsBot, MJ12bot, Yandex, Baidu, Scrapy i druge.
+</div>
 
-## Zahtjevi
+---
 
-- PHP 8.1+
-- Laravel 10, 11, 12 ili 13
+## 📖 About
 
-## Instalacija
+`laravel-bot-protection` is a drop-in middleware package that protects Laravel applications from unwanted automated traffic — **AI training crawlers, LLM agents, SEO bots, and generic scrapers**. It blocks known bot User-Agents with `HTTP 403` and adds the `X-Robots-Tag: noindex, nofollow` header to every response so well-behaved crawlers (Google, Bing, etc.) also skip indexing.
+
+Built for production apps where you need **zero-config setup** but **fine-grained control** when you want it.
+
+---
+
+## ✨ Features
+
+- 🚫 **Blocks 30+ known bots** out of the box — GPTBot, ClaudeBot, PerplexityBot, Bytespider, Google-Extended, CCBot, AhrefsBot, SemrushBot, and more
+- ⚡ **Auto-registers globally** — install and you're protected, no manual middleware setup
+- 🏷️ **Adds `X-Robots-Tag` header** to every response — covers crawlers that respect HTTP-level directives
+- 🔧 **Fully configurable** via `.env` or published config — toggle, status code, custom message, allow-list IPs
+- 📄 **Publishable `robots.txt`** with comprehensive AI/SEO crawler disallow list
+- 🌐 **Server-level config stubs** — Nginx (shared map + per-vhost), Apache vhost, `.htaccess`
+- 🧪 **Artisan test command** — verify protection works against a live URL
+- ✅ **Tested with Pest** — 13 tests covering blocking, headers, config flags, IP whitelist
+- 🐘 **Wide compatibility** — Laravel 10 / 11 / 12 / 13, PHP 8.1+
+
+---
+
+## 📋 Requirements
+
+| Requirement | Version |
+| ----------- | ------- |
+| PHP         | `^8.1`  |
+| Laravel     | `10.x`, `11.x`, `12.x`, `13.x` |
+
+---
+
+## 📦 Installation
 
 ```bash
 composer require mkopcic/laravel-bot-protection
 ```
 
-Package će se auto-discover preko Laravel package discovery. Middleware se automatski registrira u `web` grupu — nema dodatnih koraka.
+That's it. Laravel package auto-discovery registers the service provider and pushes the middleware into the `web` group. Your app is now protected.
 
-### Publish konfiguracije (opcionalno)
+### 🎨 Publishing assets (optional)
+
+| Tag | What it publishes | Destination |
+| --- | --- | --- |
+| `bot-protection-config` | Configuration file | `config/bot-protection.php` |
+| `bot-protection-robots` | Comprehensive `robots.txt` | `public/robots.txt` ⚠️ overwrites! |
+| `bot-protection-server` | Nginx + Apache + `.htaccess` snippets | `bot-protection/` |
+| `bot-protection` | Config + server stubs (everything except robots.txt) | mixed |
 
 ```bash
+# Publish config to customize blocked agents, status codes, etc.
 php artisan vendor:publish --tag=bot-protection-config
-```
 
-### Publish robots.txt (opcionalno — pazi, overwrite-a postojeći!)
-
-```bash
+# Publish robots.txt — heads up, this overwrites your existing one!
 php artisan vendor:publish --tag=bot-protection-robots
-```
 
-### Publish Nginx / Apache config primjera
-
-```bash
+# Publish Nginx / Apache config examples
 php artisan vendor:publish --tag=bot-protection-server
 ```
 
-Kreira `bot-protection/` direktorij u root-u projekta s primjerima koje zalijepiš u svoje web server configove.
+---
 
-## Konfiguracija
+## 🚀 Quick Start
 
-Sve preko `.env` varijabli ili nakon publish-a u `config/bot-protection.php`:
+After installation, verify the protection works:
 
-```env
-BOT_PROTECTION_ENABLED=true
-BOT_PROTECTION_AUTO_REGISTER=true
-BOT_PROTECTION_MIDDLEWARE_GROUP=web
-BOT_PROTECTION_BLOCK_STATUS=403
-BOT_PROTECTION_BLOCK_MESSAGE=Forbidden
-BOT_PROTECTION_X_ROBOTS_TAG="noindex, nofollow, noarchive, nosnippet"
-BOT_PROTECTION_BLOCK_EMPTY_UA=false
-BOT_PROTECTION_ALLOWED_IPS=1.2.3.4,5.6.7.8
+```bash
+# Show current configuration
+php artisan bot-protection:test config
+
+# Test live URL against default bot User-Agents
+php artisan bot-protection:test url https://mojaapp.hr
+
+# Test all configured bot agents
+php artisan bot-protection:test url https://mojaapp.hr --all
 ```
 
-## Ručna registracija middleware-a
+You should see `✓ BLOCKED [403]` for each agent.
 
-Postavi `BOT_PROTECTION_AUTO_REGISTER=false` i registriraj sam.
+---
 
-**Laravel 11 / 12 / 13** — u `bootstrap/app.php`:
+## ⚙️ Configuration
+
+All settings can be controlled via environment variables (no need to publish config):
+
+```dotenv
+# Master toggle
+BOT_PROTECTION_ENABLED=true
+
+# Auto-register middleware into web group
+BOT_PROTECTION_AUTO_REGISTER=true
+
+# Which middleware group to attach to
+BOT_PROTECTION_MIDDLEWARE_GROUP=web
+
+# What status code to return for blocked bots
+BOT_PROTECTION_BLOCK_STATUS=403
+
+# Message body for blocked responses
+BOT_PROTECTION_BLOCK_MESSAGE="Forbidden"
+
+# X-Robots-Tag header value (empty string to disable)
+BOT_PROTECTION_X_ROBOTS_TAG="noindex, nofollow, noarchive, nosnippet"
+
+# Block requests with empty User-Agent (suspicious)
+BOT_PROTECTION_BLOCK_EMPTY_UA=false
+
+# IPs that bypass blocking (comma-separated)
+BOT_PROTECTION_ALLOWED_IPS="1.2.3.4,5.6.7.8"
+```
+
+For custom blocked agent lists, publish the config and edit `config/bot-protection.php`.
+
+---
+
+## 🛠️ Manual Middleware Registration
+
+If you want full control (e.g. apply only to specific route groups), disable auto-register:
+
+```dotenv
+BOT_PROTECTION_AUTO_REGISTER=false
+```
+
+Then register manually.
+
+**Laravel 11 / 12 / 13** — in `bootstrap/app.php`:
 
 ```php
+use Mkopcic\BotProtection\Http\Middleware\BotProtectionMiddleware;
+
 ->withMiddleware(function (Middleware $middleware) {
     $middleware->web(append: [
-        \Mkopcic\BotProtection\Http\Middleware\BotProtectionMiddleware::class,
+        BotProtectionMiddleware::class,
     ]);
 })
 ```
 
-**Laravel 10** — u `app/Http/Kernel.php` u `$middlewareGroups['web']`:
+**Laravel 10** — in `app/Http/Kernel.php`:
 
 ```php
 protected $middlewareGroups = [
@@ -85,64 +161,204 @@ protected $middlewareGroups = [
 ];
 ```
 
-## Artisan komanda — testiranje
+Or apply per-route:
 
-Dva subkomanda: `url` i `config`.
+```php
+Route::middleware(BotProtectionMiddleware::class)->group(function () {
+    // protected routes
+});
+```
 
-### `config` — dump-aj trenutnu konfiguraciju
+---
+
+## 🧪 Artisan Command — `bot-protection:test`
+
+The package ships with a built-in tester with two subactions: `url` and `config`.
+
+### `config` — dump current configuration
 
 ```bash
 php artisan bot-protection:test config
 ```
 
-### `url` — pošalji HTTP request s bot UA
+Outputs all settings, allowed IPs, and the full list of blocked agents.
+
+### `url` — fire HTTP requests with bot User-Agents
 
 ```bash
-# Default test (GPTBot, ClaudeBot, PerplexityBot)
+# Default 3 representative agents (GPTBot, ClaudeBot, PerplexityBot)
 php artisan bot-protection:test url https://example.com
 
-# Konkretan agent
+# Specific agent
 php artisan bot-protection:test url https://example.com --agent=GPTBot
 
-# Svi agenti iz config-a
+# Test every agent from config
 php artisan bot-protection:test url https://example.com --all
 
 # Custom timeout
 php artisan bot-protection:test url https://example.com --timeout=30
 ```
 
-Komanda ispisuje za svaki agent: ✓ BLOCKED ili ✗ ALLOWED + status code i X-Robots-Tag header.
+Sample output:
 
-## Slojeviti pristup — web server config
+```
+Testiranje: https://example.com
+Broj agenata: 3
 
-Middleware je **prvi sloj** unutar Laravel-a. Za maksimalnu zaštitu kombiniraj s web server razinom (botovi se nikad ne dovedu do PHP-a):
+  ✓ BLOCKED [403] GPTBot
+  ✓ BLOCKED [403] ClaudeBot
+  ✓ BLOCKED [403] PerplexityBot
+
+───────────────────────────────────────
+Blocked: 3   Allowed: 0   Errors: 0
+```
+
+Returns exit code `0` if all agents are blocked, `1` if any get through.
+
+---
+
+## 🌐 Server-Level Protection (Recommended)
+
+The middleware protects at the Laravel layer. For **defense in depth**, block bots at the web server too — they never reach PHP, saving CPU.
+
+Publish the server config examples:
 
 ```bash
 php artisan vendor:publish --tag=bot-protection-server
 ```
 
-Dobiješ 4 primjera u `bot-protection/`:
+You'll get a `bot-protection/` directory with:
 
-- `nginx-shared-map.conf` — staviti jednom u `/etc/nginx/conf.d/`
-- `nginx-vhost-snippet.conf` — dodati u svaki Nginx vhost
-- `apache-vhost-snippet.conf` — Apache vhost s `SetEnvIf`
-- `htaccess-snippet.txt` — `.htaccess` verzija (kad nemaš pristup vhostu)
+| File | Use |
+| --- | --- |
+| `nginx-shared-map.conf` | Drop in `/etc/nginx/conf.d/` once — defines `$blocked_bot` map for all vhosts |
+| `nginx-vhost-snippet.conf` | Paste into each Nginx `server {}` block |
+| `apache-vhost-snippet.conf` | Full Apache vhost example with `SetEnvIf` |
+| `htaccess-snippet.txt` | `.htaccess` rules (when you can't edit vhosts) |
 
-## Testovi
+---
+
+## 🧬 How It Works
+
+```
+   ┌─────────────────────┐
+   │  Incoming Request   │
+   └──────────┬──────────┘
+              ▼
+   ┌────────────────────────┐
+   │   Web Server           │  ← optional: blocks at nginx/apache layer
+   │   (nginx/apache)       │
+   └──────────┬─────────────┘
+              ▼
+   ┌────────────────────────┐
+   │  BotProtection         │
+   │  Middleware            │
+   │                        │
+   │  1. Check enabled?     │
+   │  2. IP in allow-list?  │
+   │  3. UA matches bot?    │──── YES ──▶  HTTP 403
+   │  4. Empty UA + flag?   │
+   └──────────┬─────────────┘
+              │ NO
+              ▼
+   ┌────────────────────────┐
+   │   Laravel App          │
+   └──────────┬─────────────┘
+              ▼
+   ┌────────────────────────┐
+   │  Response              │
+   │  + X-Robots-Tag header │
+   └────────────────────────┘
+```
+
+---
+
+## 🧪 Running Tests
 
 ```bash
 composer install
 ./vendor/bin/pest
 ```
 
-13 Pest testova pokriva: blokiranje, propuštanje, X-Robots-Tag, disable flag, custom status, prazan UA, IP whitelist, case-insensitive matching.
+13 Pest tests cover:
+- ✅ Blocking known bot User-Agents
+- ✅ Allowing legitimate browser User-Agents
+- ✅ Adding `X-Robots-Tag` header to passed responses
+- ✅ Case-insensitive User-Agent matching
+- ✅ `enabled=false` bypass
+- ✅ Custom block status codes
+- ✅ Custom block messages
+- ✅ Empty `x_robots_tag` disables header
+- ✅ Empty User-Agent handling (both modes)
+- ✅ Allowed-IP bypass
 
-## Što ovaj paket NIJE
+---
 
-- **Nije autentifikacija.** Ako trebaš stvarnu privatnost (npr. dev portal), koristi Laravel auth, Basic Auth ili Cloudflare Zero Trust.
-- **Ne sprječava lažiranje User-Agenta.** Determinirani scraper će promijeniti UA. Ovo je obrana protiv masovnih AI crawlera koji se identificiraju.
-- **Nije WAF.** Za napredne stvari (rate limiting, geo-blocking, DDoS) razmotri Cloudflare ili sličan WAF.
+## 🤖 What's Blocked Out of the Box
 
-## License
+<details>
+<summary><b>Click to expand the full list (33 agents)</b></summary>
 
-MIT
+| Category | Agents |
+| --- | --- |
+| **OpenAI** | GPTBot, ChatGPT-User, OAI-SearchBot |
+| **Anthropic** | ClaudeBot, anthropic-ai, Claude-Web |
+| **Google** | Google-Extended, Googlebot, AdsBot-Google |
+| **Meta** | Meta-ExternalAgent, FacebookBot, facebookexternalhit |
+| **Apple** | Applebot, Applebot-Extended |
+| **Amazon** | Amazonbot |
+| **Perplexity** | PerplexityBot |
+| **ByteDance** | Bytespider |
+| **Common Crawl** | CCBot |
+| **Cohere** | cohere-ai |
+| **Mistral** | MistralAI-User |
+| **Diffbot** | Diffbot |
+| **SEO crawlers** | SemrushBot, AhrefsBot, MJ12bot, DotBot, BLEXBot |
+| **Eastern engines** | YandexBot, Baiduspider, Sogou |
+| **Generic scrapers** | Scrapy, python-requests, curl/, wget/ |
+
+</details>
+
+You can add, remove, or fully override the list by publishing config and editing `blocked_agents`.
+
+---
+
+## ⚠️ What This Package Is NOT
+
+- ❌ **Not authentication.** If content must be private, use Laravel auth, Basic Auth, or Cloudflare Zero Trust.
+- ❌ **Not foolproof against UA spoofing.** A determined scraper can fake any User-Agent. This package targets mass crawlers that identify themselves correctly.
+- ❌ **Not a WAF.** For rate limiting, geo-blocking, DDoS protection, layer in Cloudflare or a dedicated WAF.
+
+For maximum protection: **this package + server-level rules + authentication for sensitive content.**
+
+---
+
+## 🔗 Related
+
+- 📖 [Google: Robots meta tag and X-Robots-Tag specifications](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag)
+- 📖 [OpenAI: GPTBot opt-out documentation](https://platform.openai.com/docs/gptbot)
+- 📖 [Cloudflare: Block AI bots and scrapers](https://blog.cloudflare.com/declaring-your-aindependence-block-ai-bots-scrapers-and-crawlers-with-a-single-click/)
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please open an issue or PR.
+
+For new bot User-Agents to add to the default list, please include a source link (the bot's official documentation page).
+
+---
+
+## 📜 License
+
+The MIT License (MIT). See [LICENSE](LICENSE) for details.
+
+---
+
+<div align="center">
+
+**Built with ❤️ for the Laravel community.**
+
+If this package saved your bandwidth or your sanity, ⭐ the repo!
+
+</div>
