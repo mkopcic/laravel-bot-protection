@@ -1,0 +1,31 @@
+# Laravel public/.htaccess — bot protection blok
+# Dodati unutar <IfModule mod_rewrite.c> NAKON 'RewriteEngine On'
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # === BOT PROTECTION ===
+    RewriteCond %{HTTP_USER_AGENT} (GPTBot|ChatGPT-User|OAI-SearchBot) [NC]
+    RewriteRule .* - [F,L]
+
+    RewriteCond %{HTTP_USER_AGENT} (ClaudeBot|anthropic-ai|Claude-Web) [NC]
+    RewriteRule .* - [F,L]
+
+    RewriteCond %{HTTP_USER_AGENT} (Google-Extended|Googlebot|AdsBot-Google) [NC]
+    RewriteRule .* - [F,L]
+
+    RewriteCond %{HTTP_USER_AGENT} (Meta-ExternalAgent|FacebookBot|Applebot|Amazonbot) [NC]
+    RewriteRule .* - [F,L]
+
+    RewriteCond %{HTTP_USER_AGENT} (PerplexityBot|Bytespider|CCBot|cohere-ai|MistralAI-User|Scrapy) [NC]
+    RewriteRule .* - [F,L]
+
+    RewriteCond %{HTTP_USER_AGENT} (SemrushBot|AhrefsBot|MJ12bot|YandexBot|Baiduspider) [NC]
+    RewriteRule .* - [F,L]
+
+    # Tvoja postojeća Laravel pravila idu OVDJE ispod...
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet"
+</IfModule>

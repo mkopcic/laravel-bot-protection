@@ -1,0 +1,61 @@
+{
+    "name": "mkopcic/laravel-bot-protection",
+    "description": "Laravel middleware za blokiranje AI crawlera i tražilica. Auto-registracija, konfigurabilan, podržava Laravel 10/11/12/13.",
+    "keywords": [
+        "laravel",
+        "middleware",
+        "bot",
+        "crawler",
+        "ai",
+        "seo",
+        "privacy",
+        "gpt",
+        "claude",
+        "robots"
+    ],
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "mkopcic",
+            "email": "mkopcic@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/http": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/console": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/routing": "^10.0|^11.0|^12.0|^13.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+        "pestphp/pest": "^2.0|^3.0",
+        "pestphp/pest-plugin-laravel": "^2.0|^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Mkopcic\\BotProtection\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Mkopcic\\BotProtection\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Mkopcic\\BotProtection\\BotProtectionServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        },
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
