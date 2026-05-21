@@ -5,6 +5,17 @@ All notable changes to `laravel-bot-protection` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-05-21
+
+### Fixed
+
+- **CI matrix failures** — removed PHP 8.1 from CI test matrix because Pest 2/3's dev dependency `brianium/paratest` requires PHP 8.2+ in recent versions. The `composer.json` constraint stays at `php: ^8.1` so end-users on PHP 8.1 with Laravel 10 can still install and use the package (they don't pull dev dependencies).
+- **Laravel 13 CI failures** — removed unused `pestphp/pest-plugin-laravel` dev dependency. Its latest version (`v3.2.0`) tops out at Laravel 12 support, which blocked Laravel 13 from resolving. Testbench's `TestCase` already provides all the Laravel test helpers we use.
+
+### Changed
+
+- CI matrix now runs 10 jobs (down from 11) + a `--prefer-lowest` job on PHP 8.2 + Laravel 10.
+
 ## [1.2.0] - 2026-05-21
 
 ### Added
@@ -46,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 13 Pest tests.
 - Support for Laravel 10 / 11 / 12 / 13 on PHP 8.1+.
 
+[1.2.1]: https://github.com/mkopcic/laravel-bot-protection/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/mkopcic/laravel-bot-protection/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/mkopcic/laravel-bot-protection/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/mkopcic/laravel-bot-protection/releases/tag/v1.0.0
