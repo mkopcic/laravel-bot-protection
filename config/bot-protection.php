@@ -69,6 +69,39 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | AI Opt-Out Meta Tags
+    |--------------------------------------------------------------------------
+    |
+    | Emerging meta standard za AI opt-out (noai/noimageai). DeviantArt,
+    | ArtStation, Squarespace već koriste. Anthropic, OpenAI postupno
+    | počinju poštivati.
+    |
+    | Renderira se preko @botProtectionMeta direktive kao zaseban tag:
+    |   <meta name="robots" content="noai, noimageai">
+    |
+    | Postavi na null ili '' da se ne renderira.
+    |
+    */
+    'ai_meta_tags' => env('BOT_PROTECTION_AI_META_TAGS', 'noai, noimageai'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Generate /robots.txt Route
+    |--------------------------------------------------------------------------
+    |
+    | Ako je true, paket registrira GET /robots.txt rutu koja dinamički
+    | generira sadržaj iz blocked_agents config-a. Single source of truth —
+    | promjena u config-u automatski mijenja robots.txt.
+    |
+    | NAPOMENA: ako u public/ već postoji statika robots.txt, web server
+    | servira nju prije Laravela. Ova ruta tada djeluje samo kao fallback.
+    | Za potpunu dinamiku, obriši public/robots.txt.
+    |
+    */
+    'generate_robots_route' => env('BOT_PROTECTION_GENERATE_ROBOTS_ROUTE', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Block Empty User Agent
     |--------------------------------------------------------------------------
     |

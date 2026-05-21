@@ -1,0 +1,126 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Laravel 10 + PHP 8.1 / 8.2 / 8.3
+          - php: '8.1'
+            laravel: '10.*'
+            testbench: '8.*'
+          - php: '8.2'
+            laravel: '10.*'
+            testbench: '8.*'
+          - php: '8.3'
+            laravel: '10.*'
+            testbench: '8.*'
+
+          # Laravel 11 + PHP 8.2 / 8.3 / 8.4
+          - php: '8.2'
+            laravel: '11.*'
+            testbench: '9.*'
+          - php: '8.3'
+            laravel: '11.*'
+            testbench: '9.*'
+          - php: '8.4'
+            laravel: '11.*'
+            testbench: '9.*'
+
+          # Laravel 12 + PHP 8.2 / 8.3 / 8.4
+          - php: '8.2'
+            laravel: '12.*'
+            testbench: '10.*'
+          - php: '8.3'
+            laravel: '12.*'
+            testbench: '10.*'
+          - php: '8.4'
+            laravel: '12.*'
+            testbench: '10.*'
+
+          # Laravel 13 + PHP 8.3 / 8.4
+          - php: '8.3'
+            laravel: '13.*'
+            testbench: '11.*'
+          - php: '8.4'
+            laravel: '13.*'
+            testbench: '11.*'
+
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, dom, fileinfo, json, openssl
+          coverage: none
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-${{ hashFiles('**/composer.json') }}
+          restore-keys: |
+            ${{ runner.os }}-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-
+
+      - name: Install dependencies
+        run: |
+          composer require \
+            "illuminate/support:${{ matrix.laravel }}" \
+            "illuminate/http:${{ matrix.laravel }}" \
+            "illuminate/console:${{ matrix.laravel }}" \
+            "illuminate/routing:${{ matrix.laravel }}" \
+            "orchestra/testbench:${{ matrix.testbench }}" \
+            --no-interaction --no-update
+          composer update --prefer-dist --no-interaction --no-progress
+
+      - name: Run Pest tests
+        run: vendor/bin/pest --no-coverage
+
+  lowest:
+    name: Prefer-lowest deps (PHP 8.1 / Laravel 10)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, dom, fileinfo, json, openssl
+          coverage: none
+          tools: composer:v2
+
+      - name: Install lowest dependencies
+        run: |
+          composer require \
+            "illuminate/support:10.*" \
+            "illuminate/http:10.*" \
+            "illuminate/console:10.*" \
+            "illuminate/routing:10.*" \
+            "orchestra/testbench:8.*" \
+            --no-interaction --no-update
+          composer update --prefer-dist --prefer-lowest --no-interaction --no-progress
+
+      - name: Run Pest tests
+        run: vendor/bin/pest --no-coverage

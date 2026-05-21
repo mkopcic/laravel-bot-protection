@@ -10,7 +10,7 @@ it('renderira @botProtectionMeta direktivu', function () {
     expect($compiled)->toContain('::render()');
 });
 
-it('MetaTags::render() vraća sve 4 meta tagove', function () {
+it('MetaTags::render() vraća sve standardne robots meta tagove', function () {
     $html = MetaTags::render();
 
     expect($html)
@@ -21,10 +21,38 @@ it('MetaTags::render() vraća sve 4 meta tagove', function () {
         ->toContain('noindex, nofollow, noarchive, nosnippet');
 });
 
-it('MetaTags::render() vraća prazan string kad je x_robots_tag prazan', function () {
+it('MetaTags::render() uključuje noai/noimageai AI opt-out tag', function () {
+    $html = MetaTags::render();
+
+    expect($html)
+        ->toContain('noai, noimageai');
+});
+
+it('MetaTags::render() ne renderira AI tag kad je ai_meta_tags prazan', function () {
+    config()->set('bot-protection.ai_meta_tags', '');
+
+    $html = MetaTags::render();
+
+    expect($html)
+        ->not->toContain('noai')
+        ->toContain('<meta name="robots"'); // standardni i dalje tu
+});
+
+it('MetaTags::render() vraća prazan string kad su oba prazna', function () {
     config()->set('bot-protection.x_robots_tag', '');
+    config()->set('bot-protection.ai_meta_tags', '');
 
     expect(MetaTags::render())->toBe('');
+});
+
+it('MetaTags::render() renderira samo AI tag kad je x_robots_tag prazan', function () {
+    config()->set('bot-protection.x_robots_tag', '');
+
+    $html = MetaTags::render();
+
+    expect($html)
+        ->toContain('noai, noimageai')
+        ->not->toContain('noindex');
 });
 
 it('MetaTags::render() escape-a HTML znakove u content atributu', function () {

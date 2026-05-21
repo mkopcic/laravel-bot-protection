@@ -4,8 +4,10 @@ namespace Mkopcic\BotProtection;
 
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Mkopcic\BotProtection\Console\Commands\TestBotProtectionCommand;
+use Mkopcic\BotProtection\Http\Controllers\RobotsController;
 use Mkopcic\BotProtection\Http\Middleware\BotProtectionMiddleware;
 use Mkopcic\BotProtection\Support\MetaTags;
 
@@ -31,6 +33,24 @@ class BotProtectionServiceProvider extends ServiceProvider
         $this->registerMiddleware();
         $this->registerCommands();
         $this->registerBladeDirectives();
+        $this->registerRobotsRoute();
+    }
+
+    /**
+     * Registriraj /robots.txt rutu ako je generate_robots_route=true.
+     *
+     * Ruta se aktivira samo ako web server NE servira public/robots.txt
+     * direktno (što je default ponašanje Apache/Nginx za statičke fajlove).
+     */
+    protected function registerRobotsRoute(): void
+    {
+        if (!config('bot-protection.generate_robots_route', false)) {
+            return;
+        }
+
+        Route::get('/robots.txt', RobotsController::class)
+            ->withoutMiddleware([BotProtectionMiddleware::class])
+            ->name('bot-protection.robots');
     }
 
     /**

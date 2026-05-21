@@ -25,6 +25,8 @@ abstract class TestCase extends Orchestra
         $app['config']->set('bot-protection.block_status', 403);
         $app['config']->set('bot-protection.block_message', 'Forbidden');
         $app['config']->set('bot-protection.x_robots_tag', 'noindex, nofollow, noarchive, nosnippet');
+        $app['config']->set('bot-protection.ai_meta_tags', 'noai, noimageai');
+        $app['config']->set('bot-protection.generate_robots_route', false);
         $app['config']->set('bot-protection.block_empty_user_agent', false);
         $app['config']->set('bot-protection.log_blocked', false);
         $app['config']->set('bot-protection.log_channel', null);

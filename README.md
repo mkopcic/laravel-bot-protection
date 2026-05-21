@@ -5,6 +5,7 @@
 **Block AI crawlers, search engines, and known scrapers from your Laravel app — with one line of `composer require`.**
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/mkopcic/laravel-bot-protection.svg?style=flat-square)](https://packagist.org/packages/mkopcic/laravel-bot-protection)
+[![Tests](https://img.shields.io/github/actions/workflow/status/mkopcic/laravel-bot-protection/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/mkopcic/laravel-bot-protection/actions/workflows/tests.yml)
 [![Total Downloads](https://img.shields.io/packagist/dt/mkopcic/laravel-bot-protection.svg?style=flat-square)](https://packagist.org/packages/mkopcic/laravel-bot-protection)
 [![License](https://img.shields.io/packagist/l/mkopcic/laravel-bot-protection.svg?style=flat-square)](LICENSE)
 [![PHP Version](https://img.shields.io/packagist/php-v/mkopcic/laravel-bot-protection.svg?style=flat-square)](composer.json)
@@ -27,14 +28,16 @@ Built for production apps where you need **zero-config setup** but **fine-graine
 - 🚫 **Blocks 30+ known bots** out of the box — GPTBot, ClaudeBot, PerplexityBot, Bytespider, Google-Extended, CCBot, AhrefsBot, SemrushBot, and more
 - ⚡ **Auto-registers globally** — install and you're protected, no manual middleware setup
 - 🏷️ **Adds `X-Robots-Tag` header** to every response — covers crawlers that respect HTTP-level directives
-- 🎨 **`@botProtectionMeta` Blade directive** — one-liner for `<meta name="robots">` tags in your layouts
+- 🎨 **`@botProtectionMeta` Blade directive** — one-liner for `<meta name="robots">` and `noai/noimageai` tags
+- 🤖 **`noai, noimageai` AI opt-out meta tag** — emerging standard adopted by DeviantArt, ArtStation
+- 🔄 **Dynamic `/robots.txt` route** (opt-in) — generated from config, single source of truth
 - 📡 **`BotBlocked` event** — listen and react: log, alert, feed analytics
 - 📝 **Optional logging** — write blocked requests to any Laravel log channel
 - 🔧 **Fully configurable** via `.env` or published config — toggle, status code, custom message, allow-list IPs
 - 📄 **Publishable `robots.txt`** with comprehensive AI/SEO crawler disallow list
 - 🌐 **Server-level config stubs** — Nginx (shared map + per-vhost), Apache vhost, `.htaccess`
 - 🧪 **Artisan test command** — verify protection works against a live URL
-- ✅ **Tested with Pest** — 25+ tests covering middleware, events, logging, Blade directive, Artisan command
+- ✅ **CI-tested across Laravel 10/11/12/13 × PHP 8.1–8.4** (34 Pest tests)
 - 🐘 **Wide compatibility** — Laravel 10 / 11 / 12 / 13, PHP 8.1+
 
 ---
@@ -131,6 +134,12 @@ BOT_PROTECTION_LOG_BLOCKED=false
 
 # Specific log channel (defaults to logging.default)
 BOT_PROTECTION_LOG_CHANNEL=daily
+
+# AI opt-out meta tags (rendered by @botProtectionMeta)
+BOT_PROTECTION_AI_META_TAGS="noai, noimageai"
+
+# Serve /robots.txt dynamically from blocked_agents config
+BOT_PROTECTION_GENERATE_ROBOTS_ROUTE=false
 ```
 
 For custom blocked agent lists, publish the config and edit `config/bot-protection.php`.
@@ -159,9 +168,26 @@ Renders:
 <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
 <meta name="googlebot-news" content="noindex">
 <meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="robots" content="noai, noimageai">
 ```
 
-If `x_robots_tag` is empty, the directive renders nothing.
+The last `<meta>` is the **AI opt-out directive** — an emerging standard adopted by DeviantArt, ArtStation, Squarespace. Some AI scrapers already respect it. Disable via `BOT_PROTECTION_AI_META_TAGS=""`.
+
+If both `x_robots_tag` and `ai_meta_tags` are empty, the directive renders nothing.
+
+---
+
+## 🔄 Dynamic `/robots.txt` Route
+
+Instead of publishing a static `public/robots.txt` and keeping it in sync with your config, opt in to a dynamic route:
+
+```dotenv
+BOT_PROTECTION_GENERATE_ROBOTS_ROUTE=true
+```
+
+The package registers `GET /robots.txt` that emits content generated from your `blocked_agents` config. Change the config → robots.txt updates instantly. **Single source of truth.**
+
+> ⚠️ If `public/robots.txt` exists, your web server (Nginx/Apache) serves the static file first and the dynamic route never fires. Delete `public/robots.txt` for full dynamic behavior.
 
 ---
 
