@@ -5,6 +5,12 @@ All notable changes to `laravel-bot-protection` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-05-22
+
+### Fixed
+
+- **`auto_register` not working on Laravel 10** — `Router::pushMiddlewareToGroup()` in the service provider's `boot()` method had no effect on Laravel 10 because the HTTP Kernel's `$middlewareGroups` property initialisation overwrites the Router's group state. The fix detects Laravel 10 by checking for `Kernel::appendMiddlewareToGroup()` (present in L10, absent in L11+) and routes accordingly: L10 goes through the Kernel, L11/12/13 continue to use `Router::pushMiddlewareToGroup()`.
+
 ## [1.2.1] - 2026-05-21
 
 ### Fixed
@@ -57,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 13 Pest tests.
 - Support for Laravel 10 / 11 / 12 / 13 on PHP 8.1+.
 
+[1.2.2]: https://github.com/mkopcic/laravel-bot-protection/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/mkopcic/laravel-bot-protection/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/mkopcic/laravel-bot-protection/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/mkopcic/laravel-bot-protection/compare/v1.0.0...v1.1.0

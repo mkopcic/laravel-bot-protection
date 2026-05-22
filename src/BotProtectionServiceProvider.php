@@ -97,8 +97,11 @@ class BotProtectionServiceProvider extends ServiceProvider
     /**
      * Auto-registriraj middleware u konfiguriranu grupu.
      *
-     * Koristi Router::pushMiddlewareToGroup() koji radi identično
-     * u Laravel 10, 11, 12 i 13.
+     * Laravel 10 koristi Kernel s eksplicitnim $middlewareGroups propertyjem.
+     * Router::pushMiddlewareToGroup() tamo ne funkcionira jer Kernel property
+     * inicijalizacija pregazi Router state. Rješenje:
+     *   - L10: Kernel::appendMiddlewareToGroup()  (detektiramo po metodi)
+     *   - L11+: Router::pushMiddlewareToGroup()   (Kernel više ne postoji)
      */
     protected function registerMiddleware(): void
     {
@@ -106,12 +109,19 @@ class BotProtectionServiceProvider extends ServiceProvider
             return;
         }
 
-        /** @var Router $router */
-        $router = $this->app->make(Router::class);
-
         $group = (string) config('bot-protection.middleware_group', 'web');
 
-        $router->pushMiddlewareToGroup($group, BotProtectionMiddleware::class);
+        $kernel = $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
+
+        if (method_exists($kernel, 'appendMiddlewareToGroup')) {
+            // Laravel 10 — idi kroz Kernel
+            $kernel->appendMiddlewareToGroup($group, BotProtectionMiddleware::class);
+        } else {
+            // Laravel 11+ — Kernel ne postoji, koristimo Router
+            /** @var Router $router */
+            $router = $this->app->make(Router::class);
+            $router->pushMiddlewareToGroup($group, BotProtectionMiddleware::class);
+        }
     }
 
     /**
